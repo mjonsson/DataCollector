@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<application>
+    <settings>
+    	<setting name="rrddatapath" value="rrd"/>
+    	<setting name="rrdgraphpath" value="data"/>
+    	<setting name="htmlpath" value="html"/>
+    	<setting name="htmlrefresh" value="60"/>
+    	<setting name="sampleinterval" value="60"/>
+    	<setting name="graphxsize" value="350"/>
+    	<setting name="graphysize" value="150"/>
+    	<setting name="graphinterval" value="60"/>
+    	<!-- Possible intervals is: 1year, 1month, 1week, 1day, 12hour, 1hour -->
+    	<setting name="sampleintervals" value="1year,1month,1week,1day,12hour,1hour"/>
+    	<setting name="graphintervals" value="1year,1month,1week,1day,12hour,1hour"/>
+    </settings>
+    <modules>
+    	<net_tcpping_win id="setrsplm002" title="TCP Ping setrsplm002" order="2" enabled="true">
+	    	<setting name="server" value="sethnjonssonm02.net.plm.eds.com"/>
+	    	<setting name="port" value="445"/>
+	    	<setting name="sampleinterval" value="15"/>
+	    	<setting name="deltasample" value="5"/>
+    	</net_tcpping_win>
+    	<cpu_server_win id="sethnjonssonm02_cpu" title="Server CPU sethnjonssonm02"  order="1" enabled="true">
+	    	<setting name="server" value="sethnjonssonm02"/>
+	    	<setting name="sampleinterval" value="60"/>
+	    	<setting name="deltasample" value="5"/>
+    	</cpu_server_win>
+    	<disk_server_win id="server_disk" title="Server Disk sethnjonssonm02 c:" order="3" enabled="true">
+	    	<setting name="server" value="sethnjonssonm02"/>
+	    	<setting name="sampleinterval" value="60"/>
+	    	<setting name="deltasample" value="5"/>
+	    	<setting name="disktomonitor" value="C"/>
+    	</disk_server_win>
+    	<!--
+    	<net_tcpping_win id="nordicweb" title="nordicweb" order="2" enabled="false">
+	    	<setting name="server" value="nordicweb"/>
+	    	<setting name="port" value="80"/>
+	    	<setting name="sampleinterval" value="15"/>
+	    	<setting name="deltasample" value="5"/>
+    	</net_tcpping_win>
+    	<cpu_server_win id="server_cpu" title="Server CPU et1.sisw.local"  order="2" enabled="false">
+	    	<setting name="server" value="et1.sisw.local"/>
+	    	<setting name="sampleinterval" value="60"/>
+	    	<setting name="deltasample" value="5"/>
+    	</cpu_server_win>
+    	<disk_server_win id="server_disk" title="Server Disk et1.sisw.local c:" order="3" enabled="false">
+	    	<setting name="server" value="et1.sisw.local"/>
+	    	<setting name="sampleinterval" value="60"/>
+	    	<setting name="deltasample" value="5"/>
+	    	<setting name="disktomonitor" value="C"/>
+    	</disk_server_win>
+        <tc_fms id="FMS_1" title="FMS et1.sisw.local" order="4" enabled="false">
+	        <setting name="tcinstallpath" value="D:\Apps\Teamcenter\TC83_01"/>
+	    	<setting name="url" value="http://sethnjonssonm11:4544"/>
+	    	<setting name="sampleinterval" value="30"/>
+        </tc_fms>
+        <tc_enterprise_net id="tcent_sethnpstclab100_net" title="TC Ent. sethnpstclab100 Net/TcPoolA" order="7" enabled="false">
+	    	<setting name="url" value="http://sethnpstclab100:8901/tc/admin/PoolConfig.aspx?ServerID=8985%40sethnpstclab100"/>
+	    	<setting name="login" value="manager"/>
+	    	<setting name="password" value="manager"/>
+	    	<setting name="timeout" value="10"/>
+	    	<setting name="sampleinterval" value="20"/>
+        </tc_enterprise_net>
+        <tc_enterprise_j2ee id="tcent_et1_j2ee" title="TC Ent. et1.sisw.local J2EE/TcPoolA" order="1" enabled="true">
+	    	<setting name="url" value="http://et1.sisw.local:8082"/>
+	    	<setting name="login" value="manager"/>
+	    	<setting name="password" value="manager"/>
+	    	<setting name="timeout" value="10"/>
+	    	<setting name="sampleinterval" value="20"/>
+        </tc_enterprise_j2ee>
+        -->
+    </modules>
+</application>
