@@ -72,7 +72,7 @@ public abstract class Module implements Runnable {
 		StreamReader srErr = null;
 		Process proc = null;
 		Thread tOut = null;
-		Thread tErr = null;
+//		Thread tErr = null;
 
 		try {
 			List<String> cmd = new ArrayList<String>();
@@ -96,7 +96,7 @@ public abstract class Module implements Runnable {
 			srOut = new StreamReader(proc.getInputStream());
 			srErr = new StreamReader(proc.getErrorStream());
 			tOut = srOut.start();
-			tErr = srErr.start();
+			srErr.start();
 
 			tOut.join(this.timeOut * 1000);
 
