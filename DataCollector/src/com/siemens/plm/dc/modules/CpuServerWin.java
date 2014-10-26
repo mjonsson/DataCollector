@@ -187,8 +187,6 @@ public class CpuServerWin extends Module {
 				timer.stop();
 				sleepDelta();
 				addSamples();
-				// if (Thread.interrupted()) throw new InterruptedException();
-				// if (Application.rereadConfig) break;
 			}
 		} catch (InterruptedException ex) {
 			log.warn("Thread \"" + thread.getName() + "\" was interrupted. Exiting...");
