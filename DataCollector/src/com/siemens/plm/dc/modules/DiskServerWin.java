@@ -2,7 +2,6 @@ package com.siemens.plm.dc.modules;
 
 import com.siemens.plm.dc.Application;
 import com.siemens.plm.dc.Module;
-import com.siemens.plm.dc.Timer;
 
 import java.awt.Color;
 import java.io.File;
@@ -95,9 +94,6 @@ public class DiskServerWin extends Module
 		this.diskWritePercent = Double.valueOf(this.diskWritePercent.doubleValue() / lines);
 		this.diskReadTime = Double.valueOf(this.diskReadTime.doubleValue() / lines * 1000.0D);
 		this.diskWriteTime = Double.valueOf(this.diskWriteTime.doubleValue() / lines * 1000.0D);
-		
-		// Wait until interval complete until adding samles
-		sleepDelta();
 	}
 
 	private final void addSamples() throws Exception
@@ -176,20 +172,20 @@ public class DiskServerWin extends Module
 	public final void run()
 	{
 		super.run();
-		try
-		{
-			while (true)
-			{
-				timer = Timer.start();
+		try {
+			while (true) {
+				timer.start();
 				rrdCreate();
 				getSamples();
+				timer.stop();
+				sleepDelta();
 				addSamples();
-				if (Thread.interrupted()) throw new InterruptedException();
-				if (Application.rereadConfig) break;
+				// if (Thread.interrupted()) throw new InterruptedException();
+				// if (Application.rereadConfig) break;
 			}
-		}
-		catch (Exception ex)
-		{
+		} catch (InterruptedException ex) {
+			log.warn("Thread \"" + thread.getName() + "\" was interrupted. Exiting...");
+		} catch (Exception ex) {
 			log.error(ex.getMessage());
 			log.error(Application.stackTraceToString(ex));
 		}

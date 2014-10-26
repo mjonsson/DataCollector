@@ -60,7 +60,7 @@ implements Runnable
 	protected boolean collectorStarted = false;
 	protected boolean grapherStarted = false;
 	protected Thread thread = null;
-	protected long timer;
+	protected Timer timer = new Timer();
 	
 	private static final Logger log = Logger.getLogger(Module.class);
 	
@@ -89,7 +89,7 @@ implements Runnable
 			log.debug("Args        : " + arguments);
 			log.debug("Directory   : " + dir);
 
-			long s = Timer.start();
+			timer.start();
 			proc = pb.start();
 			StreamReader srOut = new StreamReader(proc.getInputStream());
 			StreamReader srErr = new StreamReader(proc.getErrorStream());
@@ -129,7 +129,7 @@ implements Runnable
 				return "";
 			}
 
-			log.info("Command took " + Timer.stop(s) + " ms to complete.");
+			log.info("Command took " + timer.delta() + " ms to complete.");
 			log.debug("Command output on stdout:");
 			log.debug(srOut.getData());
 
@@ -175,7 +175,7 @@ implements Runnable
 			log.info("Fetching data from URL:");
 			log.info("Name        : " + this.url + queryString);
 			
-			long s = Timer.start();
+			timer.start();
 			URL uri = new URL(this.url + queryString);
 			urlc = uri.openConnection();
 			urlc.setUseCaches(false);
@@ -201,7 +201,7 @@ implements Runnable
 				return "";
 			}
 
-			log.info("Data fetch " + Timer.stop(s) + " ms to complete.");
+			log.info("Data fetch " + timer.delta() + " ms to complete.");
 			log.debug("Fetch output:");
 			log.debug(sr.getData());
 
@@ -447,16 +447,8 @@ implements Runnable
 		return false;
 	}
 
-	protected final void spinCheck(long time) throws Exception {
-		if (time < (this.sampleInterval * 1000) / this.spinCheckFactor)
-		{
-			log.error("Thread spin detected. Sleeping for one interval...");
-			Thread.sleep(this.sampleInterval * 1000);
-		}
-	}
-	
 	protected final void sleepDelta() throws Exception {
-		long delta = this.sampleInterval * 1000 - Timer.stop(timer);
+		long delta = this.sampleInterval * 1000 - timer.delta();
 		
 		log.debug(String.format("Sleeping for %d s", delta));
 		

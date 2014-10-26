@@ -3,7 +3,6 @@ package com.siemens.plm.dc.modules;
 import com.siemens.plm.dc.Application;
 import com.siemens.plm.dc.Module;
 import com.siemens.plm.dc.OSValidator;
-import com.siemens.plm.dc.Timer;
 
 import java.awt.Color;
 import java.io.File;
@@ -11,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.xml.bind.annotation.XmlType;
 
 import org.apache.log4j.Logger;
@@ -87,9 +87,6 @@ public class TcFsc extends Module
 			this.cacheSizeRead = (Double.parseDouble(m.group(2)) / 1048576.0D);
 			this.cacheSizeWrite = (Double.parseDouble(m.group(6)) / 1048576.0D);
 		}
-		
-		// Wait until interval complete until adding samles
-		sleepDelta();
 	}
 
 	private final void addSamples() throws Exception
@@ -166,20 +163,20 @@ public class TcFsc extends Module
 	public final void run()
 	{
 		super.run();
-		try
-		{
-			while (true)
-			{
-				timer = Timer.start();
+		try {
+			while (true) {
+				timer.start();
 				rrdCreate();
 				getSamples();
+				timer.stop();
+				sleepDelta();
 				addSamples();
-				if (Thread.interrupted()) throw new InterruptedException();
-				if (Application.rereadConfig) break;
+				// if (Thread.interrupted()) throw new InterruptedException();
+				// if (Application.rereadConfig) break;
 			}
-		}
-		catch (Exception ex)
-		{
+		} catch (InterruptedException ex) {
+			log.warn("Thread \"" + thread.getName() + "\" was interrupted. Exiting...");
+		} catch (Exception ex) {
 			log.error(ex.getMessage());
 			log.error(Application.stackTraceToString(ex));
 		}

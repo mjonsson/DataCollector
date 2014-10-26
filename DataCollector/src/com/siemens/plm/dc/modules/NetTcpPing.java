@@ -2,7 +2,6 @@ package com.siemens.plm.dc.modules;
 
 import com.siemens.plm.dc.Application;
 import com.siemens.plm.dc.Module;
-import com.siemens.plm.dc.Timer;
 
 import java.awt.Color;
 import java.io.File;
@@ -62,9 +61,6 @@ public class NetTcpPing extends Module
 				this.pingTime = Double.parseDouble(m.group(2));
 			}
 		}
-		
-		// Wait until interval complete until adding samles
-		sleepDelta();
 	}
 
 	private void addSamples() throws Exception
@@ -114,21 +110,20 @@ public class NetTcpPing extends Module
 	public final void run()
 	{
 		super.run();
-
-		try
-		{
-			while (true)
-			{
-				timer = Timer.start();
+		try {
+			while (true) {
+				timer.start();
 				rrdCreate();
 				getSamples();
+				timer.stop();
+				sleepDelta();
 				addSamples();
-				if (Thread.interrupted()) throw new InterruptedException();
-				if (Application.rereadConfig) break;
+				// if (Thread.interrupted()) throw new InterruptedException();
+				// if (Application.rereadConfig) break;
 			}
-		}
-		catch (Exception ex)
-		{
+		} catch (InterruptedException ex) {
+			log.warn("Thread \"" + thread.getName() + "\" was interrupted. Exiting...");
+		} catch (Exception ex) {
 			log.error(ex.getMessage());
 			log.error(Application.stackTraceToString(ex));
 		}

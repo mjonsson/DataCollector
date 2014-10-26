@@ -1,17 +1,27 @@
 package com.siemens.plm.dc;
 
 public class Timer {
+	private long start;
+	private long stop;
+	
 	public Timer()
 	{
 	}
 	
-	public static final long start()
-	{		
-		return System.currentTimeMillis();
+	public final void start()
+	{
+		start = System.currentTimeMillis();
+		stop = start;
 	}
 	
-	public static final long stop(long start)
+	public final void stop()
 	{
-		return System.currentTimeMillis() - start;
+		stop = System.currentTimeMillis();
+	}
+	
+	public final long delta()
+	{
+		if (stop == start) { stop(); }
+		return stop - start;
 	}
 }

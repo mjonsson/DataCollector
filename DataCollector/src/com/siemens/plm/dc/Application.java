@@ -21,23 +21,23 @@ import javax.xml.bind.annotation.XmlRootElement;
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
-@XmlRootElement(name="application")
+@XmlRootElement(name = "application")
 @XmlAccessorType(XmlAccessType.NONE)
-public class Application
-{
+public class Application {
+	private static final Timer timer = new Timer();
 	private static final Logger log = Logger.getLogger(Application.class);
 
-	@XmlElementWrapper(name="settings")
-	@XmlElement(name="setting")
+	@XmlElementWrapper(name = "settings")
+	@XmlElement(name = "setting")
 	public List<Setting> settingsList;
 
-	@XmlElement(name="modules")
+	@XmlElement(name = "modules")
 	public Modules modules;
-	public static boolean rereadConfig = false;
+	// public static boolean rereadConfig = false;
 	public static HashMap<String, String> globalSettings;
 	public static String appPath;
 	public static List<String> graphPrefixes = new ArrayList<String>();
-	public static Map<String, Interval> sampleIntervals = new LinkedHashMap<String, Interval>() { 
+	public static Map<String, Interval> sampleIntervals = new LinkedHashMap<String, Interval>() {
 		private static final long serialVersionUID = 1L;
 		{
 			put("1hour", new Interval("1 Hour", 3600));
@@ -64,68 +64,61 @@ public class Application
 		}
 	};
 
-	public Application() throws Exception
-	{
+	public Application() throws Exception {
 		Thread.currentThread().setName("main");
 		Thread.currentThread().setPriority(1);
 	}
 
-	public final void initialize()
-			throws Exception
-			{
+	public final void initialize() throws Exception {
 		globalSettings = new HashMap<String, String>();
-		for (Setting setting : this.settingsList)
-		{
-			globalSettings.put(setting.name.toLowerCase().trim(), setting.value.trim());
+		for (Setting setting : this.settingsList) {
+			globalSettings.put(setting.name.toLowerCase().trim(),
+					setting.value.trim());
 		}
 
 		List<String> toRemove = new ArrayList<String>();
-		for (String interval : sampleIntervals.keySet())
-		{
-			if (!((String)globalSettings.get("sampleintervals")).contains(interval))
-			{
+		for (String interval : sampleIntervals.keySet()) {
+			if (!((String) globalSettings.get("sampleintervals"))
+					.contains(interval)) {
 				toRemove.add(interval);
 			}
 		}
-		for (String interval : toRemove)
-		{
+		for (String interval : toRemove) {
 			sampleIntervals.remove(interval);
 		}
 		toRemove = new ArrayList<String>();
-		for (String interval : graphIntervals.keySet())
-		{
-			if (!((String)globalSettings.get("graphintervals")).contains(interval))
-			{
+		for (String interval : graphIntervals.keySet()) {
+			if (!((String) globalSettings.get("graphintervals"))
+					.contains(interval)) {
 				toRemove.add(interval);
 			}
 		}
-		for (String interval : toRemove)
-		{
+		for (String interval : toRemove) {
 			graphIntervals.remove(interval);
 		}
 
-		if ((sampleIntervals.isEmpty()) || (graphIntervals.isEmpty()))
-		{
+		if ((sampleIntervals.isEmpty()) || (graphIntervals.isEmpty())) {
 			throw new Exception("No valid time intervals has been defined.");
 		}
-			}
+	}
 
-	public static final void main()
-	{
+	public static final void main() {
 		File configFile;
 		long configLastMod;
-		Application.rereadConfig = false;
+		// Application.rereadConfig = false;
 
-		try
-		{
-			Application.appPath = URLDecoder.decode(Start.class.getProtectionDomain().getCodeSource().getLocation().getPath(), "UTF-8");
+		try {
+			Application.appPath = URLDecoder.decode(Start.class
+					.getProtectionDomain().getCodeSource().getLocation()
+					.getPath(), "UTF-8");
 			if (!new File(Application.appPath + "log4j.xml").canRead())
 				throw new Exception("Cannot open logging configuration file.");
 			DOMConfigurator.configure(Application.appPath + "log4j.xml");
 
 			configFile = new File(Application.appPath + "datacollector.xml");
 			if (!configFile.canRead())
-				throw new Exception("Cannot open application configuration file.");
+				throw new Exception(
+						"Cannot open application configuration file.");
 			configLastMod = configFile.lastModified();
 
 			Configuration config = new Configuration();
@@ -133,8 +126,7 @@ public class Application
 			app.initialize();
 
 			List<Module> toRemove = new ArrayList<Module>();
-			for (Module mod : app.modules.getModules())
-			{
+			for (Module mod : app.modules.getModules()) {
 				if (mod.initialize())
 					mod.start();
 				else
@@ -144,105 +136,91 @@ public class Application
 
 			app.generateHTML();
 
-			long workerSleep = Integer.parseInt((String)Application.globalSettings.get("graphinterval")) * 1000; 
-			while (true)
-			{
+			long workerSleep = Integer
+					.parseInt((String) Application.globalSettings
+							.get("graphinterval")) * 1000;
+			while (true) {
 				Thread.sleep(workerSleep);
-				for (Module mod : app.modules.getModules())
-				{
-					long s = Timer.start();
+				for (Module mod : app.modules.getModules()) {
+					timer.start();
 					mod.buildGraph();
-					log.info("Generated graphs in " + Timer.stop(s) + " ms");
+					log.info("Generated graphs in " + timer.delta() + " ms");
 				}
-				if (configFile.lastModified() > configLastMod)
-				{
+				if (configFile.lastModified() > configLastMod) {
 					log.warn("Rereading application configuration file.");
 					configLastMod = configFile.lastModified();
-					Application.rereadConfig = true;
+					// Application.rereadConfig = true;
 
-					boolean allStopped = false;
-					while (!allStopped)
-					{
-						log.debug("Waiting for application threads to exit.");
-						allStopped = true;
-						for (Module mod : app.modules.getModules())
-						{
-							if (mod.thread.isAlive())
-							{
-								allStopped = false;
-							}
+					log.debug("Waiting for application threads to exit.");
+					for (Module m : app.modules.getModules()) {
+						if (m.thread.isAlive()) {
+							m.thread.interrupt();
+							m.thread.join();
+							log.debug("   Thread \"" + m.thread.getName()
+									+ "\" exited");
 						}
-						Thread.sleep(1000);
 					}
 					log.warn("All threads exited. Rereading...");
-					Application.rereadConfig = false;
+					// Application.rereadConfig = false;
 
 					Application.main();
 				}
 			}
-		}
-		catch (Exception ex)
-		{
+		} catch (Exception ex) {
 			log.error(ex.getMessage());
 			log.error(Application.stackTraceToString(ex));
 		}
 	}
 
-	public static final String stackTraceToString(Exception ex)
-	{
+	public static final String stackTraceToString(Exception ex) {
 		Writer result = new StringWriter();
 		PrintWriter printWriter = new PrintWriter(result);
 		ex.printStackTrace(printWriter);
 		return result.toString();
 	}
 
-	public final void generateHTML() throws Exception
-	{
-		String htmlDir = (String)globalSettings.get("htmlpath");
-		String graphDir = (String)globalSettings.get("rrdgraphpath");
+	public final void generateHTML() throws Exception {
+		String htmlDir = (String) globalSettings.get("htmlpath");
+		String graphDir = (String) globalSettings.get("rrdgraphpath");
 		File outputDir = new File(appPath + File.separator + htmlDir);
-		String header = 
-				"<html>\n<head>\n<title>DataCollector Graphs</title>\n<meta http-equiv=\"CACHE-CONTROL\" content=\"NO-CACHE\">\n<meta http-equiv=\"PRAGMA\" content=\"NO-CACHE\">\n<meta http-equiv=\"REFRESH\" content=\"" + 
-						(String)globalSettings.get("htmlrefresh") + "\">\n" + 
-						"</head>\n<body>\n" + 
-						"<table>\n";
-		String footer = 
-				"</table>\n</body>\n</html>\n";
+		String header = "<html>\n<head>\n<title>DataCollector Graphs</title>\n<meta http-equiv=\"CACHE-CONTROL\" content=\"NO-CACHE\">\n<meta http-equiv=\"PRAGMA\" content=\"NO-CACHE\">\n<meta http-equiv=\"REFRESH\" content=\""
+				+ (String) globalSettings.get("htmlrefresh")
+				+ "\">\n"
+				+ "</head>\n<body>\n" + "<table>\n";
+		String footer = "</table>\n</body>\n</html>\n";
 		String bodyAll = "";
 
-		if (!outputDir.exists())
-		{
+		if (!outputDir.exists()) {
 			outputDir.mkdir();
 		}
-		for (String path : graphPrefixes)
-		{
+		for (String path : graphPrefixes) {
 			bodyAll = bodyAll + "<tr>\n";
-			for (String interval : graphIntervals.keySet())
-			{
-				bodyAll = bodyAll + "<td>\n<img src=\"../" + graphDir + "/" + path + "_" + interval + ".png\"/>\n</td>\n";
+			for (String interval : graphIntervals.keySet()) {
+				bodyAll = bodyAll + "<td>\n<img src=\"../" + graphDir + "/"
+						+ path + "_" + interval + ".png\"/>\n</td>\n";
 			}
 			bodyAll = bodyAll + "</tr>\n";
 		}
 
-		BufferedWriter out = new BufferedWriter(new FileWriter(outputDir.getAbsolutePath() + "/All.html"));
+		BufferedWriter out = new BufferedWriter(new FileWriter(
+				outputDir.getAbsolutePath() + "/All.html"));
 		out.write(header + bodyAll + footer);
 		out.close();
 
-		for (String prefix : graphPrefixes)
-		{
+		for (String prefix : graphPrefixes) {
 			String bodyModule = "<tr>\n";
 			int i = 0;
-			for (String interval : graphIntervals.keySet())
-			{
+			for (String interval : graphIntervals.keySet()) {
 				i++;
-				bodyModule = bodyModule + "<td><img src=\"../" + graphDir + "/" + prefix + "_" + interval + ".png\"/>\n</td>\n";
-				if (i % 3 == 0)
-				{
+				bodyModule = bodyModule + "<td><img src=\"../" + graphDir + "/"
+						+ prefix + "_" + interval + ".png\"/>\n</td>\n";
+				if (i % 3 == 0) {
 					bodyModule = bodyModule + "</tr>\n<tr>\n";
 				}
 			}
 			bodyModule = bodyModule + "</tr>\n";
-			out = new BufferedWriter(new FileWriter(outputDir.getAbsolutePath() + "/" + prefix + ".html"));
+			out = new BufferedWriter(new FileWriter(outputDir.getAbsolutePath()
+					+ "/" + prefix + ".html"));
 			out.write(header + bodyModule + footer);
 			out.close();
 		}
